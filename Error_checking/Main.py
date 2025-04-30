@@ -15,9 +15,11 @@ import torch.utils.data as data
 from Loss.dice import DiceLoss 
 from Loss.focal import FocalLoss
 
-from Model.utils import UNet 
-from Model.RESUnet import ResUNeT
-#from Model_new.Model import UNeT
+# from Model.utils import UNet 
+# from Model.RESUnet import ResUNeT
+# from Model_new.Model import UNeT
+
+from Updated_Model.Model import UNeT
 
 from dataset_module import OCTADataset
 from utils import Data_Augmentation, LabelGeneration, Save_Model, Load_model 
@@ -43,8 +45,8 @@ def main(lr=None, num_classes=None, in_ch=None, batch_size=None, activation=None
     
 
     #model = UNet(in_channels=in_ch, num_classes=num_classes).to(device) 
-    model = ResUNeT(in_channels=in_ch, num_classes=num_classes).to(device)
-   # model = UNeT(in_channels=in_ch, num_layers=2, num_classes=num_classes, attn=True).to(device)
+    #model = ResUNeT(in_channels=in_ch, num_classes=num_classes).to(device)
+    model = UNeT(in_channels=in_ch, num_layers=3, num_classes=num_classes, attn=True).to(device)
     optimizer = optim.Adam(model.parameters(), lr=lr) 
     dice_loss = DiceLoss()#, classes=np.array([0.25, 0.75]))
     focal_loss = FocalLoss()
@@ -64,10 +66,10 @@ if __name__ == '__main__':
     
     in_ch = 1
     num_classes = 1
-    batch_size = 32
+    batch_size = 16
     activation = 'sigmoid'
     maskfolder = os.path.join('train','label')
-    num_epochs = 300
+    num_epochs = 500
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
     #print(device, torch.cuda.is_available(), torch.cuda.current_device(), sep='\n')  

@@ -11,6 +11,9 @@ import torch.nn.functional as F
 from Model_new.utils import ConvLayer, DecoderBlock
 from Model_new.oc_block import APNB
 
+# from utils import ConvLayer, DecoderBlock
+# from oc_block import APNB
+
 class Encoder(nn.Module):
     def __init__(self, in_channel, num_layers):
         super().__init__()
@@ -24,14 +27,14 @@ class Encoder(nn.Module):
         self.block3 = nn.Sequential(ConvLayer(in_channels=32, out_channels=64),
                                     *[ConvLayer(in_channels=64, out_channels=64) for _ in range(num_layers)])
         
-        self.block4 = nn.Sequential(ConvLayer(in_channels=64, out_channels=96),
-                                    *[ConvLayer(in_channels=96, out_channels=96) for _ in range(num_layers)])
-        
-        self.block5 = nn.Sequential(ConvLayer(in_channels=96, out_channels=128),
-                                    *[ConvLayer(in_channels=128, out_channels=128) for _ in range(num_layers)]) 
-        
-        self.block6 = nn.Sequential(ConvLayer(in_channels=128, out_channels=128),
+        self.block4 = nn.Sequential(ConvLayer(in_channels=64, out_channels=128),
                                     *[ConvLayer(in_channels=128, out_channels=128) for _ in range(num_layers)])
+        
+        self.block5 = nn.Sequential(ConvLayer(in_channels=128, out_channels=256),
+                                    *[ConvLayer(in_channels=256, out_channels=256) for _ in range(num_layers)]) 
+        
+        self.block6 = nn.Sequential(ConvLayer(in_channels=256, out_channels=512),
+                                    *[ConvLayer(in_channels=512, out_channels=512) for _ in range(num_layers)])
 
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
@@ -67,9 +70,9 @@ class Decoder(nn.Module):
     def __init__(self, num_classes, num_layers, attn=True):
         super().__init__()
 
-        self.block1 = DecoderBlock(in_channel=128, out_channel=128, skip_channel=128, attn=attn, num_layers=num_layers) 
-        self.block2 = DecoderBlock(in_channel=128, out_channel=96, skip_channel=96, attn=attn, num_layers=num_layers)
-        self.block3 = DecoderBlock(in_channel=96, out_channel=64, skip_channel=64, attn=attn, num_layers=num_layers)
+        self.block1 = DecoderBlock(in_channel=512, out_channel=256, skip_channel=256, attn=attn, num_layers=num_layers) 
+        self.block2 = DecoderBlock(in_channel=256, out_channel=128, skip_channel=128, attn=attn, num_layers=num_layers)
+        self.block3 = DecoderBlock(in_channel=128, out_channel=64, skip_channel=64, attn=attn, num_layers=num_layers)
         self.block4 = DecoderBlock(in_channel=64, out_channel=32, skip_channel=32, attn=attn, num_layers=num_layers)
         self.block5 = DecoderBlock(in_channel=32, out_channel=16, skip_channel=16, attn=attn, num_layers=num_layers)
 
@@ -81,9 +84,11 @@ class Decoder(nn.Module):
 
         skip = features.pop() 
         out  = self.block1(out, skip) 
-
+         
+        
         skip = features.pop() 
         out  = self.block2(out, skip) 
+        
 
         skip = features.pop() 
         out  = self.block3(out, skip) 
@@ -104,7 +109,7 @@ class UNeT(nn.Module):
         super().__init__()
 
         self.enc = Encoder(in_channel=in_channels, num_layers=num_layers) 
-        self.oc  = APNB(in_channels=128, out_channels=128, key_channels=16, value_channels=16, scale=1)
+        self.oc  = APNB(in_channels=512, out_channels=512, key_channels=16, value_channels=16, scale=1)
         self.dec = Decoder(num_classes=num_classes, num_layers=num_layers, attn=attn) 
     
     def forward(self, x):
@@ -118,9 +123,18 @@ class UNeT(nn.Module):
 
 if __name__ == '__main__':
 
-    os.system('cls') 
+    os.system('clear') 
 
-    model  = UNeT(in_channels=1, num_layers=2, num_classes=1, attn=True)
+    # model  = UNeT(in_channels=1, num_layers=2, num_classes=1, attn=True)
+    # x = torch.randn(2, 1, 512, 512) 
+    # out = model(x)  
+    # print(out.shape)
+
+    enc = Encoder(in_channel=1, num_layers=3)
     x = torch.randn(2, 1, 512, 512) 
-    out = model(x)  
+    out, skip = enc(x) 
+    #print(out.shape, skip[0].shape, skip[1].shape, skip[2].shape, skip[3].shape, skip[4].shape, sep='\n\n')
+
+    dec = Decoder(num_classes=1, num_layers=3, attn=True)
+    out = dec(out, skip) 
     print(out.shape)

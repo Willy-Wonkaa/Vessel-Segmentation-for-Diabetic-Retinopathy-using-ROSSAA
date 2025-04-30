@@ -67,7 +67,7 @@ def train_model(model, train_loader, optimizer, losses, device=None):
     preci_score  = preci_score / count 
     speci_score = speci_score / count 
     recall_score = recall_score/ count
-    print(f'Train: losses { Avg_losses} iou score {iou_score} dice score {dice_score} \
+    print(f'Train: losses { Avg_losses}  dice score {dice_score}  iou score {iou_score}\
           precision score {preci_score}  specificity { speci_score} recall {recall_score}') 
     
     return model
